@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EVE Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#fbf7f4;--card:#fff;--ink:#2b2321;--muted:#8a7f7a;--line:#eee4de;--brand:#b5838d;--brand-d:#8e5f69;--soft:#f5e9e6;--ok:#4f9d69;--warn:#d9922e;--bad:#c4554d;--info:#4f7fb5}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Prompt',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-weight:300;line-height:1.5;-webkit-font-smoothing:antialiased}
+b,strong,h1,h2,h3{font-weight:500}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:16px}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+header.top{position:sticky;top:0;z-index:10;background:rgba(251,247,244,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-size:22px;font-weight:600;letter-spacing:.12em;color:var(--brand-d);text-decoration:none}
+.logo small{font-weight:300;letter-spacing:.02em;color:var(--muted);font-size:12px;margin-left:6px}
+.cartbtn{position:relative;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:14px;color:var(--ink);text-decoration:none}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--brand-d);color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 5px}
+.hero{padding:28px 0 8px}
+.hero h1{margin:0 0 4px;font-size:26px}
+.hero p{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:16px 0 120px}
+@media(min-width:720px){.grid{grid-template-columns:repeat(3,1fr);gap:18px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.pimg{aspect-ratio:1/1;display:grid;place-items:center;font-size:34px;font-weight:600;color:rgba(255,255,255,.95);letter-spacing:.1em;position:relative}
+.pimg img{width:100%;height:100%;object-fit:cover}
+.tag{position:absolute;top:10px;left:10px;background:#fff;color:var(--brand-d);font-size:11px;padding:2px 8px;border-radius:999px;letter-spacing:0;font-weight:500}
+.pbody{padding:12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.pname{font-weight:500;font-size:15px}
+.pdesc{font-size:12px;color:var(--muted);flex:1}
+.price{font-size:17px;font-weight:500;color:var(--brand-d)}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-size:15px;background:var(--brand-d);color:#fff;font-weight:400}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:10px}
+.btn.block{width:100%}
+.stepper{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.stepper button{border:0;background:var(--soft);width:38px;height:38px;font-size:18px;color:var(--brand-d)}
+.stepper span{font-weight:500}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:9;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.bar a{display:flex;justify-content:space-between;max-width:928px;margin:0 auto;text-decoration:none}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;margin:16px 0}
+.panel h2{margin:0 0 12px;font-size:18px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:6px 0}
+.row.total{border-top:1px dashed var(--line);margin-top:6px;padding-top:12px;font-size:18px;font-weight:500}
+.muted{color:var(--muted)}
+.citem{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.citem:last-child{border-bottom:0}
+.thumb{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:600;font-size:14px}
+.citem .stepper button{width:32px;height:32px}
+.citem .stepper{width:104px}
+label.f{display:block;margin:0 0 12px}
+label.f span{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+label.f input,label.f textarea,label.f select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff;color:var(--ink)}
+label.f textarea{resize:vertical;min-height:80px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.err{color:var(--bad);font-size:13px;margin:-4px 0 10px}
+.back{display:inline-block;margin:16px 0 0;color:var(--muted);text-decoration:none;font-size:14px}
+.qrbox{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0}
+.qrhead{background:#113566;color:#fff;border-radius:12px 12px 0 0;width:252px;text-align:center;padding:6px;font-weight:500;letter-spacing:.05em}
+#qr{background:#fff;padding:16px;border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;width:252px;display:grid;place-items:center}
+.amount{font-size:28px;font-weight:600;color:var(--brand-d)}
+.drop{display:block;border:2px dashed var(--line);border-radius:16px;padding:20px;text-align:center;color:var(--muted);cursor:pointer;background:var(--bg)}
+.drop img{max-width:100%;max-height:320px;border-radius:10px;display:block;margin:0 auto 8px}
+.done{text-align:center;padding:40px 0}
+.done .ic{width:72px;height:72px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:36px;margin:0 auto 12px}
+.oid{font-size:22px;font-weight:600;letter-spacing:.05em;background:var(--soft);display:inline-block;padding:6px 16px;border-radius:10px;margin:8px 0}
+/* admin */
+.tabs{display:flex;gap:6px;margin:16px 0}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 16px;font-size:14px;color:var(--ink)}
+.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;color:var(--ink)}
+.chips button.on{background:var(--soft);border-color:var(--brand);color:var(--brand-d);font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+@media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat .n{font-size:22px;font-weight:600}
+.stat .l{font-size:12px;color:var(--muted)}
+.order{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;display:grid;grid-template-columns:1fr auto;gap:10px}
+.order .slip{width:72px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in}
+.st{display:inline-block;font-size:12px;padding:2px 10px;border-radius:999px;color:#fff;font-weight:400}
+.st.pending{background:var(--warn)}.st.paid{background:var(--info)}.st.shipped{background:var(--ok)}.st.cancelled{background:#9a9a9a}
+.order select{border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:13px;background:#fff}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.8);display:grid;place-items:center;z-index:50;padding:16px}
+.lightbox img{max-width:100%;max-height:90vh;border-radius:10px}
+.rfilter{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
+.rfilter label.f{margin:0;flex:1;min-width:130px}
+.tblwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:14px}
+table.rep{border-collapse:collapse;width:100%;font-size:13px;min-width:820px}
+table.rep th,table.rep td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+table.rep th{background:var(--soft);font-weight:500;white-space:nowrap}
+table.rep td.num,table.rep th.num{text-align:right;white-space:nowrap}
+table.rep tfoot td{font-weight:600;background:#faf4f2}
+.demo{background:#fff6e5;border:1px solid #f1d9a8;color:#7a5a1c;font-size:13px;padding:8px 12px;border-radius:10px;margin-top:12px}
+.printonly{display:none}
+@media print{
+  body{background:#fff}
+  header.top,.noprint,.tabs,.rfilter,.demo{display:none!important}
+  .printonly{display:block}
+  .tblwrap{border:0;overflow:visible}
+  table.rep{min-width:0;font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ==================== ตั้งค่าร้าน (แก้ตรงนี้) ==================== */
+const CONFIG = {
+  shopName: 'EVE',
+  tagline: 'สั่งง่าย จ่ายผ่านพร้อมเพย์ ส่งถึงบ้าน',
+  promptpay: '0812345678',            // เบอร์พร้อมเพย์ หรือเลขบัตร 13 หลัก (ตัวอย่าง)
+  promptpayName: 'ชื่อบัญชีตัวอย่าง',
+  shipping: { flat: 50, freeOver: 1000 }, // ค่าส่งเหมา / ซื้อครบเท่านี้ส่งฟรี
+  supabaseUrl: '',                    // ว่าง = โหมดทดลอง (เก็บในเครื่อง)
+  supabaseKey: '',
+  localAdminPin: '1234',              // รหัสเข้าหลังบ้านในโหมดทดลอง
+};
+
+/* สินค้าตัวอย่าง — แทนด้วยของจริงภายหลัง (img = URL รูป, ว่างไว้จะใช้สีแทน) */
+const PRODUCTS = [
+  { id:'p1', name:'EVE Serum ตัวอย่าง', desc:'เซรั่มบำรุงผิว 30 ml', price:590, img:'', color:'#c9a0a8', tag:'ขายดี' },
+  { id:'p2', name:'EVE Cream ตัวอย่าง', desc:'ครีมบำรุงกลางคืน 50 g', price:690, img:'', color:'#b5838d' },
+  { id:'p3', name:'EVE Sunscreen ตัวอย่าง', desc:'กันแดด SPF50 PA++++ 30 ml', price:390, img:'', color:'#d8b4a0', tag:'ใหม่' },
+  { id:'p4', name:'EVE Cleanser ตัวอย่าง', desc:'โฟมล้างหน้า 100 ml', price:290, img:'', color:'#a3b4a2' },
+  { id:'p5', name:'EVE Toner ตัวอย่าง', desc:'โทนเนอร์ 150 ml', price:350, img:'', color:'#9fb1c7' },
+  { id:'p6', name:'EVE Set ตัวอย่าง', desc:'เซ็ตสุดคุ้ม 3 ชิ้น', price:1290, img:'', color:'#8e5f69', tag:'คุ้มสุด' },
+];
+/* =============================================================== */
+
+const STATUS = { pending:'รอตรวจสลิป', paid:'ชำระแล้ว รอส่ง', shipped:'ส่งแล้ว', cancelled:'ยกเลิก' };
+const useSB = !!(CONFIG.supabaseUrl && CONFIG.supabaseKey);
+const sb = useSB ? supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey) : null;
+
+const $app = document.getElementById('app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const baht = n => '฿' + Number(n||0).toLocaleString('th-TH');
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fmtDT = iso => { const d = new Date(iso); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()+543} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+
+let cart = load('eve_cart', {});
+let form = load('eve_form', {});
+let slip = null;        // dataURL ของสลิป
+let lastOrder = null;
+let busy = false;
+const A = { authed:false, tab:'orders', filter:'all', orders:[], from:ymd(new Date(Date.now()-6*864e5)), to:ymd(new Date()), rstatus:'paid', lightbox:null };
+
+/* ---------- PromptPay QR (EMVCo) ---------- */
+function tlv(id, v){ return id + String(v.length).padStart(2,'0') + v; }
+function crc16(s){ let c=0xFFFF; for(let i=0;i<s.length;i++){ c^=s.charCodeAt(i)<<8; for(let j=0;j<8;j++) c=(c&0x8000)?((c<<1)^0x1021):(c<<1); c&=0xFFFF; } return c.toString(16).toUpperCase().padStart(4,'0'); }
+function promptpayPayload(target, amount){
+  const t = String(target).replace(/\D/g,'');
+  const acc = t.length >= 13 ? tlv('02', t) : tlv('01', ('0000000000000' + t.replace(/^0/,'66')).slice(-13));
+  const p = tlv('00','01') + tlv('01', amount ? '12' : '11') + tlv('29', tlv('00','A000000677010111') + acc)
+          + tlv('53','764') + (amount ? tlv('54', Number(amount).toFixed(2)) : '') + tlv('58','TH') + '6304';
+  return p + crc16(p);
+}
+
+/* ---------- ตะกร้า ---------- */
+function totals(){
+  const items = Object.entries(cart).map(([id,qty]) => {
+    const p = PRODUCTS.find(x => x.id === id);
+    return p && qty > 0 ? { id, name:p.name, price:p.price, qty, sum:p.price*qty } : null;
+  }).filter(Boolean);
+  const subtotal = items.reduce((a,b) => a+b.sum, 0);
+  const shipping = subtotal === 0 || subtotal >= CONFIG.shipping.freeOver ? 0 : CONFIG.shipping.flat;
+  return { items, subtotal, shipping, total: subtotal+shipping, count: items.reduce((a,b)=>a+b.qty,0) };
+}
+function setQty(id, d){ cart[id] = Math.max(0, (cart[id]||0) + d); if(!cart[id]) delete cart[id]; save('eve_cart', cart); render(); }
+
+/* ---------- ชั้นข้อมูล: Supabase หรือ localStorage ---------- */
+function newOrderId(){ const d=new Date(); return `EVE${String(d.getFullYear()).slice(2)}${pad(d.getMonth()+1)}${pad(d.getDate())}-${Math.random().toString(36).slice(2,6).toUpperCase()}`; }
+function dataURLtoBlob(u){ const [h,b]=u.split(','); const bin=atob(b); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i); return new Blob([a],{type:h.match(/:(.*?);/)[1]}); }
+
+const DB = {
+  async createOrder(o, slipDataUrl){
+    if(!useSB){ const all = load('eve_orders', []); all.unshift({ ...o, slip: slipDataUrl }); save('eve_orders', all); return; }
+    const path = `${o.id}.jpg`;
+    const up = await sb.storage.from('slips').upload(path, dataURLtoBlob(slipDataUrl), { contentType:'image/jpeg' });
+    if(up.error) throw up.error;
+    const { error } = await sb.from('orders').insert({ ...o, slip_path: path });
+    if(error) throw error;
+  },
+  async listOrders(){
+    if(!useSB) return load('eve_orders', []);
+    const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending:false }).limit(1000);
+    if(error) throw error;
+    const paths = data.filter(o => o.slip_path).map(o => o.slip_path);
+    if(paths.length){
+      const { data: urls } = await sb.storage.from('slips').createSignedUrls(paths, 3600);
+      const m = Object.fromEntries((urls||[]).map(u => [u.path, u.signedUrl]));
+      data.forEach(o => o.slip = m[o.slip_path]);
+    }
+    return data;
+  },
+  async setStatus(id, status){
+    if(!useSB){ const all = load('eve_orders', []); const o = all.find(x=>x.id===id); if(o) o.status = status; save('eve_orders', all); return; }
+    const { error } = await sb.from('orders').update({ status }).eq('id', id); if(error) throw error;
+  },
+  async session(){ if(!useSB) return sessionStorage.getItem('eve_admin') === '1'; const { data } = await sb.auth.getSession(); return !!data.session; },
+  async login(email, pw){
+    if(!useSB){ if(pw !== CONFIG.localAdminPin) throw new Error('รหัสไม่ถูกต้อง'); sessionStorage.setItem('eve_admin','1'); return; }
+    const { error } = await sb.auth.signInWithPassword({ email, password: pw }); if(error) throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+  },
+  async logout(){ if(!useSB) sessionStorage.removeItem('eve_admin'); else await sb.auth.signOut(); },
+};
+
+/* ---------- ส่วนประกอบ ---------- */
+function pimg(p, cls='pimg'){
+  const initials = p.name.replace(/^EVE\s*/,'').slice(0,2).toUpperCase();
+  const inner = p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy">` : (cls==='pimg' ? 'EVE' : esc(initials));
+  return `<div class="${cls}" style="background:linear-gradient(135deg,${p.color||'#b5838d'},${p.color||'#b5838d'}cc)">${inner}${cls==='pimg'&&p.tag?`<span class="tag">${esc(p.tag)}</span>`:''}</div>`;
+}
+function header(){
+  const c = totals().count;
+  return `<header class="top"><div class="wrap"><a class="logo" href="#/">${esc(CONFIG.shopName)}<small>shop</small></a>
+    <a class="cartbtn" href="#/cart">🛒 ตะกร้า${c?`<span class="badge">${c}</span>`:''}</a></div></header>`;
+}
+function summaryRows(t){
+  return `${t.items.map(i=>`<div class="row"><span>${esc(i.name)} <span class="muted">× ${i.qty}</span></span><span>${baht(i.sum)}</span></div>`).join('')}
+  <div class="row muted"><span>ค่าจัดส่ง</span><span>${t.shipping ? baht(t.shipping) : 'ส่งฟรี'}</span></div>
+  <div class="row total"><span>ยอดชำระ</span><span>${baht(t.total)}</span></div>`;
+}
+
+/* ---------- หน้าร้าน ---------- */
+function viewShop(){
+  const t = totals();
+  const free = CONFIG.shipping.freeOver;
+  return header() + `<main class="wrap">
+    <section class="hero"><h1>สินค้า ${esc(CONFIG.shopName)}</h1><p>${esc(CONFIG.tagline)} · ซื้อครบ ${baht(free)} ส่งฟรี</p></section>
+    <div class="grid">${PRODUCTS.map(p => {
+      const q = cart[p.id] || 0;
+      return `<div class="card">${pimg(p)}<div class="pbody"><div class="pname">${esc(p.name)}</div><div class="pdesc">${esc(p.desc)}</div>
+        <div class="price">${baht(p.price)}</div>
+        ${q ? `<div class="stepper"><button onclick="setQty('${p.id}',-1)">−</button><span>${q}</span><button onclick="setQty('${p.id}',1)">+</button></div>`
+            : `<button class="btn" onclick="setQty('${p.id}',1)">ใส่ตะกร้า</button>`}
+      </div></div>`;
+    }).join('')}</div></main>
+    ${t.count ? `<div class="bar"><a class="btn block" href="#/cart"><span>ดูตะกร้า (${t.count} ชิ้น)</span><span>${baht(t.subtotal)}</span></a></div>` : ''}`;
+}
+
+function viewCart(){
+  const t = totals();
+  if(!t.count) return header() + `<main class="wrap"><div class="panel" style="text-align:center;padding:40px 16px"><p class="muted">ยังไม่มีสินค้าในตะกร้า</p><a class="btn" href="#/">เลือกสินค้า</a></div></main>`;
+  const need = CONFIG.shipping.freeOver - t.subtotal;
+  return header() + `<main class="wrap"><a class="back" href="#/">← เลือกสินค้าต่อ</a>
+    <div class="panel"><h2>ตะกร้าสินค้า</h2>
+      ${t.items.map(i => { const p = PRODUCTS.find(x=>x.id===i.id); return `<div class="citem">${pimg(p,'thumb')}
+        <div><div class="pname">${esc(i.name)}</div><div class="muted" style="font-size:13px">${baht(i.price)} / ชิ้น</div></div>
+        <div style="text-align:right"><div class="stepper"><button onclick="setQty('${i.id}',-1)">−</button><span>${i.qty}</span><button onclick="setQty('${i.id}',1)">+</button></div>
+        <div style="margin-top:4px;font-weight:500">${baht(i.sum)}</div></div></div>`; }).join('')}
+    </div>
+    <div class="panel">
+      <div class="row"><span>ราคาสินค้า</span><span>${baht(t.subtotal)}</span></div>
+      <div class="row"><span>ค่าจัดส่ง</span><span>${t.shipping ? baht(t.shipping) : 'ส่งฟรี'}</span></div>
+      ${need > 0 ? `<div class="muted" style="font-size:13px">ซื้อเพิ่มอีก ${baht(need)} ส่งฟรี</div>` : ''}
+      <div class="row total"><span>รวมทั้งหมด</span><span>${baht(t.total)}</span></div>
+      <a class="btn block" style="display:block;text-align:center;text-decoration:none;margin-top:12px" href="#/checkout">กรอกที่อยู่จัดส่ง →</a>
+    </div></main>`;
+}
+
+const FIELDS = [
+  ['name','ชื่อ-นามสกุล ผู้รับ','text',true],
+  ['phone','เบอร์โทร','tel',true],
+  ['address','ที่อยู่ (บ้านเลขที่ ถนน ตำบล/แขวง อำเภอ/เขต)','textarea',true],
+  ['province','จังหวัด','text',true],
+  ['zipcode','รหัสไปรษณีย์','text',true],
+  ['line_id','LINE ID (ไม่บังคับ)','text',false],
+  ['note','หมายเหตุถึงร้าน (ไม่บังคับ)','textarea',false],
+];
+function validate(f){
+  const e = {};
+  FIELDS.forEach(([k,,,req]) => { if(req && !String(f[k]||'').trim()) e[k] = 'กรุณากรอกข้อมูล'; });
+  if(f.phone && !/^0\d{8,9}$/.test(f.phone.replace(/\D/g,''))) e.phone = 'เบอร์โทรไม่ถูกต้อง';
+  if(f.zipcode && !/^\d{5}$/.test(f.zipcode.trim())) e.zipcode = 'รหัสไปรษณีย์ 5 หลัก';
+  return e;
+}
+let formErr = {};
+function viewCheckout(){
+  if(!totals().count){ location.hash = '#/'; return ''; }
+  const fld = ([k,label,type]) => `<label class="f"><span>${label}</span>${type==='textarea'
+      ? `<textarea name="${k}" oninput="formSet(this)">${esc(form[k])}</textarea>`
+      : `<input name="${k}" type="${type}" value="${esc(form[k])}" oninput="formSet(this)" ${k==='phone'?'inputmode="tel" maxlength="12"':''} ${k==='zipcode'?'inputmode="numeric" maxlength="5"':''}>`}</label>
+    ${formErr[k]?`<div class="err">${formErr[k]}</div>`:''}`;
+  return header() + `<main class="wrap"><a class="back" href="#/cart">← กลับไปตะกร้า</a>
+    <div class="panel"><h2>ที่อยู่จัดส่ง</h2>
+      ${fld(FIELDS[0])}${fld(FIELDS[1])}${fld(FIELDS[2])}
+      <div class="two"><div>${fld(FIELDS[3])}</div><div>${fld(FIELDS[4])}</div></div>
+      ${fld(FIELDS[5])}${fld(FIELDS[6])}
+    </div>
+    <div class="panel"><h2>สรุปคำสั่งซื้อ</h2>${summaryRows(totals())}
+      <button class="btn block" style="margin-top:12px" onclick="goPay()">ไปหน้าชำระเงิน →</button></div></main>`;
+}
+function formSet(el){ form[el.name] = el.value; save('eve_form', form); }
+function goPay(){ formErr = validate(form); if(Object.keys(formErr).length){ render(); const first=document.querySelector('.err'); first&&first.scrollIntoView({block:'center'}); return; } location.hash = '#/pay'; }
+
+function viewPay(){
+  const t = totals();
+  if(!t.count){ location.hash = '#/'; return ''; }
+  if(Object.keys(validate(form)).length){ location.hash = '#/checkout'; return ''; }
+  return header() + `<main class="wrap"><a class="back" href="#/checkout">← แก้ไขที่อยู่</a>
+    <div class="panel"><h2>1. สแกนจ่ายผ่านพร้อมเพย์</h2>
+      <div class="qrbox"><div class="qrhead">PromptPay</div><div id="qr"></div>
+        <div class="amount">${baht(t.total)}</div><div class="muted">ชื่อบัญชี: ${esc(CONFIG.promptpayName)}</div>
+        <div class="muted" style="font-size:13px">แคปหน้าจอแล้วเปิดแอปธนาคาร เลือกสแกนจากรูปได้เลย</div></div>
+    </div>
+    <div class="panel"><h2>2. แนบสลิปการโอน</h2>
+      <label class="drop">${slip ? `<img src="${slip}" alt="สลิป">แตะเพื่อเปลี่ยนรูป` : '📎 แตะเพื่อเลือกรูปสลิป'}
+        <input type="file" accept="image/*" hidden onchange="pickSlip(this)"></label>
+    </div>
+    <div class="panel"><h2>สรุปคำสั่งซื้อ</h2>${summaryRows(t)}
+      <div class="muted" style="font-size:13px;margin-top:8px">ส่งถึง: ${esc(form.name)} · ${esc(form.phone)}<br>${esc(form.address)} ${esc(form.province)} ${esc(form.zipcode)}</div>
+      <button class="btn block" style="margin-top:12px" ${slip&&!busy?'':'disabled'} onclick="submitOrder()">${busy?'กำลังส่ง...':'ยืนยันคำสั่งซื้อ'}</button>
+    </div></main>`;
+}
+function afterPay(){
+  const el = document.getElementById('qr'); if(!el) return;
+  new QRCode(el, { text: promptpayPayload(CONFIG.promptpay, totals().total), width:220, height:220, correctLevel: QRCode.CorrectLevel.M });
+}
+function pickSlip(input){
+  const file = input.files[0]; if(!file) return;
+  const img = new Image(); const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const s = Math.min(1, 1000/Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = img.width*s; c.height = img.height*s;
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    slip = c.toDataURL('image/jpeg', .7); URL.revokeObjectURL(url); render();
+  };
+  img.src = url;
+}
+async function submitOrder(){
+  if(busy || !slip) return;
+  busy = true; render();
+  const t = totals();
+  const o = { id:newOrderId(), created_at:new Date().toISOString(), status:'pending',
+    name:form.name.trim(), phone:form.phone.replace(/\D/g,''), address:form.address.trim(), province:form.province.trim(),
+    zipcode:form.zipcode.trim(), line_id:(form.line_id||'').trim(), note:(form.note||'').trim(),
+    items:t.items.map(({id,name,price,qty})=>({id,name,price,qty})), subtotal:t.subtotal, shipping:t.shipping, total:t.total };
+  try {
+    await DB.createOrder(o, slip);
+    lastOrder = o; cart = {}; save('eve_cart', cart); slip = null;
+    location.hash = '#/done';
+  } catch(e){ alertBox('ส่งคำสั่งซื้อไม่สำเร็จ กรุณาลองใหม่: ' + (e.message||e)); }
+  busy = false; render();
+}
+function alertBox(msg){ const d=document.createElement('div'); d.className='lightbox'; d.innerHTML=`<div class="panel" style="max-width:360px">${esc(msg)}<button class="btn block" style="margin-top:12px">ตกลง</button></div>`; d.onclick=()=>d.remove(); document.body.appendChild(d); }
+
+function viewDone(){
+  if(!lastOrder) return header() + `<main class="wrap"><div class="done"><a class="btn" href="#/">กลับหน้าร้าน</a></div></main>`;
+  const o = lastOrder;
+  return header() + `<main class="wrap"><div class="done"><div class="ic">✓</div><h2 style="margin:0">ได้รับคำสั่งซื้อแล้ว ขอบคุณค่ะ</h2>
+    <div class="oid">${esc(o.id)}</div><p class="muted">ร้านจะตรวจสอบสลิปและจัดส่งให้เร็วที่สุด<br>แคปหน้านี้เก็บไว้เป็นหลักฐานได้เลยค่ะ</p></div>
+    <div class="panel"><h2>รายละเอียด</h2>${summaryRows({ items:o.items.map(i=>({...i,sum:i.price*i.qty})), shipping:o.shipping, total:o.total })}
+      <div class="muted" style="font-size:13px;margin-top:8px">ส่งถึง: ${esc(o.name)} · ${esc(o.phone)}<br>${esc(o.address)} ${esc(o.province)} ${esc(o.zipcode)}</div></div>
+    <a class="btn ghost block" style="display:block;text-align:center;text-decoration:none;margin-bottom:40px" href="#/">กลับหน้าร้าน</a></main>`;
+}
+
+/* ---------- หลังบ้าน ---------- */
+const adminHeader = () => `<header class="top"><div class="wrap"><a class="logo" href="#/admin">${esc(CONFIG.shopName)}<small>หลังบ้าน</small></a>
+  ${A.authed?`<button class="btn ghost sm" onclick="adminLogout()">ออกจากระบบ</button>`:''}</div></header>`;
+
+function viewAdmin(){
+  if(!A.authed) return adminHeader() + `<main class="wrap" style="max-width:420px"><div class="panel" style="margin-top:40px"><h2>เข้าสู่ระบบหลังบ้าน</h2>
+    ${useSB?`<label class="f"><span>อีเมล</span><input id="em" type="email"></label>`:''}
+    <label class="f"><span>${useSB?'รหัสผ่าน':'รหัสเข้าหลังบ้าน'}</span><input id="pw" type="password" onkeydown="if(event.key==='Enter')adminLogin()"></label>
+    <div id="lerr" class="err"></div>
+    <button class="btn block" onclick="adminLogin()">เข้าสู่ระบบ</button>
+    ${useSB?'':`<div class="demo">โหมดทดลอง: รหัสคือ ${esc(CONFIG.localAdminPin)} (ข้อมูลเก็บในเครื่องนี้เท่านั้น)</div>`}</div></main>`;
+  return adminHeader() + `<main class="wrap">
+    <div class="tabs"><button class="${A.tab==='orders'?'on':''}" onclick="A.tab='orders';render()">ออเดอร์</button>
+      <button class="${A.tab==='report'?'on':''}" onclick="A.tab='report';render()">รีพอร์ตส่งฝ่ายจัดส่ง</button></div>
+    ${A.tab==='orders' ? viewOrders() : viewReport()}
+    ${useSB?'':`<div class="demo noprint">โหมดทดลอง — ยังไม่ได้ต่อฐานข้อมูล ออเดอร์อยู่ในเบราว์เซอร์นี้เท่านั้น <button class="btn ghost sm" onclick="seedDemo()">+ สร้างออเดอร์ตัวอย่าง 8 รายการ</button> <button class="btn ghost sm" onclick="clearDemo()">ล้างข้อมูล</button></div>`}
+    <div style="height:40px"></div></main>
+    ${A.lightbox?`<div class="lightbox" onclick="A.lightbox=null;render()"><img src="${A.lightbox}"></div>`:''}`;
+}
+function viewOrders(){
+  const os = A.orders;
+  const cnt = s => os.filter(o=>o.status===s).length;
+  const today = ymd(new Date());
+  const todaySales = os.filter(o=>o.status!=='cancelled' && ymd(new Date(o.created_at))===today).reduce((a,o)=>a+Number(o.total),0);
+  const list = A.filter==='all' ? os : os.filter(o=>o.status===A.filter);
+  return `<div class="stats">
+      <div class="stat"><div class="n" style="color:var(--warn)">${cnt('pending')}</div><div class="l">รอตรวจสลิป</div></div>
+      <div class="stat"><div class="n" style="color:var(--info)">${cnt('paid')}</div><div class="l">ชำระแล้ว รอส่ง</div></div>
+      <div class="stat"><div class="n" style="color:var(--ok)">${cnt('shipped')}</div><div class="l">ส่งแล้ว</div></div>
+      <div class="stat"><div class="n">${baht(todaySales)}</div><div class="l">ยอดขายวันนี้</div></div></div>
+    <div class="chips">${[['all','ทั้งหมด'],...Object.entries(STATUS)].map(([k,l])=>`<button class="${A.filter===k?'on':''}" onclick="A.filter='${k}';render()">${l}</button>`).join('')}
+      <button onclick="refreshOrders()">↻ รีเฟรช</button></div>
+    ${list.length ? list.map(o=>`<div class="order"><div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(o.id)}</b><span class="st ${o.status}">${STATUS[o.status]}</span><span class="muted" style="font-size:12px">${fmtDT(o.created_at)}</span></div>
+        <div style="margin-top:6px"><b>${esc(o.name)}</b> · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a>${o.line_id?` · LINE ${esc(o.line_id)}`:''}</div>
+        <div class="muted" style="font-size:13px">${esc(o.address)} ${esc(o.province)} ${esc(o.zipcode)}</div>
+        <div style="font-size:13px;margin-top:6px">${o.items.map(i=>`${esc(i.name)} × ${i.qty}`).join(', ')}</div>
+        ${o.note?`<div style="font-size:13px;color:var(--brand-d)">หมายเหตุ: ${esc(o.note)}</div>`:''}
+        <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b style="font-size:16px">${baht(o.total)}</b>
+          <select onchange="changeStatus('${esc(o.id)}',this.value)">${Object.entries(STATUS).map(([k,l])=>`<option value="${k}" ${o.status===k?'selected':''}>${l}</option>`).join('')}</select></div>
+      </div>${o.slip?`<img class="slip" src="${esc(o.slip)}" alt="สลิป" onclick="A.lightbox=this.src;render()">`:'<div class="muted" style="font-size:12px">ไม่มีสลิป</div>'}</div>`).join('')
+      : '<div class="panel muted" style="text-align:center">ไม่มีออเดอร์</div>'}`;
+}
+function reportRows(){
+  return A.orders.filter(o => {
+    const d = ymd(new Date(o.created_at));
+    return d >= A.from && d <= A.to && (A.rstatus==='all' ? o.status!=='cancelled' : o.status===A.rstatus);
+  }).sort((a,b)=>a.created_at.localeCompare(b.created_at));
+}
+function productSummary(rows){
+  const m = {}; rows.forEach(o=>o.items.forEach(i=>{ m[i.name]=(m[i.name]||0)+i.qty; })); return Object.entries(m);
+}
+function viewReport(){
+  const rows = reportRows();
+  const sumQty = rows.reduce((a,o)=>a+o.items.reduce((x,i)=>x+i.qty,0),0);
+  const sumTotal = rows.reduce((a,o)=>a+Number(o.total),0);
+  const th = d => { const [y,m,dd]=d.split('-'); return `${dd}/${m}/${+y+543}`; };
+  return `<div class="rfilter">
+      <label class="f"><span>ตั้งแต่วันที่</span><input type="date" value="${A.from}" onchange="A.from=this.value;render()"></label>
+      <label class="f"><span>ถึงวันที่</span><input type="date" value="${A.to}" onchange="A.to=this.value;render()"></label>
+      <label class="f"><span>สถานะ</span><select onchange="A.rstatus=this.value;render()">
+        ${[['paid','ชำระแล้ว รอส่ง'],['all','ทั้งหมด (ยกเว้นยกเลิก)'],['pending','รอตรวจสลิป'],['shipped','ส่งแล้ว']].map(([k,l])=>`<option value="${k}" ${A.rstatus===k?'selected':''}>${l}</option>`).join('')}</select></label>
+      <button class="btn sm" onclick="exportXlsx()" ${rows.length?'':'disabled'}>⬇ Excel</button>
+      <button class="btn ghost sm" onclick="window.print()" ${rows.length?'':'disabled'}>🖨 พิมพ์ / PDF</button>
+      ${A.rstatus==='paid'&&rows.length?`<button class="btn ghost sm" onclick="markShipped()">✓ ทำเครื่องหมายว่าส่งแล้ว</button>`:''}</div>
+    <div class="printonly"><h2 style="margin:0">${esc(CONFIG.shopName)} — รายการจัดส่ง</h2><div>วันที่ ${th(A.from)} – ${th(A.to)}</div><br></div>
+    <div class="stats"><div class="stat"><div class="n">${rows.length}</div><div class="l">จำนวนออเดอร์</div></div>
+      <div class="stat"><div class="n">${sumQty}</div><div class="l">จำนวนชิ้นรวม</div></div>
+      <div class="stat"><div class="n">${baht(sumTotal)}</div><div class="l">ยอดรวมทุกออเดอร์</div></div></div>
+    <div class="tblwrap"><table class="rep"><thead><tr><th>#</th><th>เลขออเดอร์</th><th>วันที่</th><th>ชื่อผู้รับ</th><th>เบอร์โทร</th><th>ที่อยู่จัดส่ง</th><th>สินค้า</th><th class="num">ชิ้น</th><th class="num">ยอด (บาท)</th></tr></thead>
+      <tbody>${rows.map((o,i)=>`<tr><td>${i+1}</td><td>${esc(o.id)}</td><td>${fmtDT(o.created_at)}</td><td>${esc(o.name)}</td><td>${esc(o.phone)}</td>
+        <td>${esc(o.address)} ${esc(o.province)} ${esc(o.zipcode)}</td><td>${o.items.map(it=>`${esc(it.name)} × ${it.qty}`).join('<br>')}</td>
+        <td class="num">${o.items.reduce((x,it)=>x+it.qty,0)}</td><td class="num">${Number(o.total).toLocaleString('th-TH')}</td></tr>`).join('')
+        || '<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">ไม่มีออเดอร์ในช่วงนี้</td></tr>'}</tbody>
+      ${rows.length?`<tfoot><tr><td colspan="7">รวม ${rows.length} ออเดอร์</td><td class="num">${sumQty}</td><td class="num">${sumTotal.toLocaleString('th-TH')}</td></tr></tfoot>`:''}</table></div>
+    ${rows.length?`<div class="panel"><h2>สรุปจำนวนสินค้าที่ต้องแพ็ค</h2>${productSummary(rows).map(([n,q])=>`<div class="row"><span>${esc(n)}</span><b>${q} ชิ้น</b></div>`).join('')}</div>`:''}`;
+}
+function exportXlsx(){
+  const rows = reportRows();
+  const aoa = [[`${CONFIG.shopName} — รายการจัดส่ง ${A.from} ถึง ${A.to}`], [],
+    ['#','เลขออเดอร์','วันที่','ชื่อผู้รับ','เบอร์โทร','ที่อยู่','จังหวัด','รหัสไปรษณีย์','สินค้า','จำนวนชิ้น','ยอด (บาท)','หมายเหตุ']];
+  rows.forEach((o,i)=>aoa.push([i+1,o.id,fmtDT(o.created_at),o.name,o.phone,o.address,o.province,o.zipcode,
+    o.items.map(it=>`${it.name} x${it.qty}`).join(', '),o.items.reduce((x,it)=>x+it.qty,0),Number(o.total),o.note||'']));
+  aoa.push(['','','','','','','','',`รวม ${rows.length} ออเดอร์`,rows.reduce((a,o)=>a+o.items.reduce((x,it)=>x+it.qty,0),0),rows.reduce((a,o)=>a+Number(o.total),0),'']);
+  aoa.push([],['สรุปจำนวนสินค้า']); productSummary(rows).forEach(([n,q])=>aoa.push([n,q]));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [4,16,16,22,13,40,12,10,40,9,11,24].map(w=>({wch:w}));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'รายการจัดส่ง');
+  XLSX.writeFile(wb, `EVE-จัดส่ง-${A.from}_${A.to}.xlsx`);
+}
+async function markShipped(){
+  const rows = reportRows();
+  if(!confirm(`เปลี่ยน ${rows.length} ออเดอร์เป็น "ส่งแล้ว"?`)) return;
+  for(const o of rows) await DB.setStatus(o.id, 'shipped');
+  await refreshOrders();
+}
+async function adminLogin(){
+  const pw = document.getElementById('pw').value, em = document.getElementById('em')?.value;
+  try { await DB.login(em, pw); A.authed = true; await refreshOrders(); }
+  catch(e){ document.getElementById('lerr').textContent = e.message; }
+}
+async function adminLogout(){ await DB.logout(); A.authed = false; render(); }
+async function refreshOrders(){ try { A.orders = await DB.listOrders(); } catch(e){ alertBox('โหลดออเดอร์ไม่สำเร็จ: '+e.message); } render(); }
+async function changeStatus(id, s){ await DB.setStatus(id, s); await refreshOrders(); }
+function seedDemo(){
+  const names = ['สมหญิง ใจดี','วรรณา แสงทอง','ปิยะนุช สุขใจ','กมลชนก ศรีสุข','อรทัย มณีวงศ์','ณัฐชา บุญมา','พิมพ์ชนก ทองดี','ศิริพร รุ่งเรือง'];
+  const prov = ['กรุงเทพมหานคร','นนทบุรี','เชียงใหม่','ขอนแก่น','ชลบุรี','ภูเก็ต','นครราชสีมา','สงขลา'];
+  const st = ['pending','pending','paid','paid','paid','paid','shipped','paid'];
+  const all = load('eve_orders', []);
+  names.forEach((n,i)=>{
+    const items = PRODUCTS.filter((_,j)=>(i+j)%3===0).slice(0,2).map((p,k)=>({id:p.id,name:p.name,price:p.price,qty:k+1}));
+    const sub = items.reduce((a,b)=>a+b.price*b.qty,0), ship = sub>=CONFIG.shipping.freeOver?0:CONFIG.shipping.flat;
+    all.unshift({ id:newOrderId(), created_at:new Date(Date.now()-i*5.3*3600e3).toISOString(), status:st[i], name:n, phone:'08'+String(10000000+i*1234567).slice(0,8),
+      address:`${12+i}/3 ถนนตัวอย่าง ตำบลตัวอย่าง อำเภอเมือง`, province:prov[i], zipcode:String(10100+i*1111).slice(0,5), line_id:'', note:i===2?'ฝากไว้ที่ป้อมยาม':'',
+      items, subtotal:sub, shipping:ship, total:sub+ship, slip:'' });
+  });
+  save('eve_orders', all); refreshOrders();
+}
+function clearDemo(){ if(confirm('ล้างออเดอร์ทดลองทั้งหมด?')){ save('eve_orders', []); refreshOrders(); } }
+
+/* ---------- router ---------- */
+async function render(){
+  const h = location.hash || '#/';
+  let html = '';
+  if(h.startsWith('#/admin')) html = viewAdmin();
+  else if(h === '#/cart') html = viewCart();
+  else if(h === '#/checkout') html = viewCheckout();
+  else if(h === '#/pay') html = viewPay();
+  else if(h === '#/done') html = viewDone();
+  else html = viewShop();
+  $app.innerHTML = html;
+  if(h === '#/pay') afterPay();
+}
+let lastHash = location.hash;
+window.addEventListener('hashchange', async () => {
+  if(location.hash !== lastHash){ formErr = {}; window.scrollTo(0,0); lastHash = location.hash; }
+  if(location.hash.startsWith('#/admin')){ if(!A.authed) A.authed = await DB.session(); if(A.authed) return refreshOrders(); }
+  render();
+});
+(async () => {
+  if(location.hash.startsWith('#/admin')){ A.authed = await DB.session(); if(A.authed){ await refreshOrders(); return; } }
+  render();
+})();
+</script>
+</body>
+</html>
