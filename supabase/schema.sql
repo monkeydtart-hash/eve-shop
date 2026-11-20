@@ -21,6 +21,9 @@ create table if not exists public.orders (
 
 alter table public.orders enable row level security;
 
+grant insert on public.orders to anon;
+grant select, insert, update, delete on public.orders to authenticated;
+
 -- ลูกค้า (anon) สร้างออเดอร์ได้อย่างเดียว อ่าน/แก้ไม่ได้
 create policy "customer can create order" on public.orders
   for insert to anon with check (status = 'pending');
